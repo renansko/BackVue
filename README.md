@@ -33,7 +33,7 @@ Esperamos a compreensão pois infelizmente não temos tempo que desejaríamos pa
 * Realizar o desafio conforme descrito na página inicial do projeto. Ver print abaixo:
 
 ![alt](https://bitbucket.org/einov/desafiofullstack/downloads/frontend.png)
-* Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <contato@einov.com>
+* Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <ti@einov.com>
 * Avisar a E-Inov para validar a solução 😃
 
 
@@ -50,5 +50,5 @@ Esperamos a compreensão pois infelizmente não temos tempo que desejaríamos pa
 
 ![alt](https://bitbucket.org/einov/desafiofullstackback/downloads/postman-get-users.png)
 
-* Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <contato@einov.com>
+* Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <ti@einov.com>
 * Avisar a E-Inov para validar a solução 😃
