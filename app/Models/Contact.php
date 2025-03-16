@@ -2,20 +2,18 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Ramsey\Uuid\Uuid;
 
-class User extends Authenticatable
+class Contact extends Model
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    protected $table = 'users';
+    protected $table = 'contacts';
 
     /**
      * The attributes that are mass assignable.
@@ -23,21 +21,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
         'phone',
-        'company_id'
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
     ];
 
 
@@ -47,10 +31,7 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'id' => 'string',
         'phone' => 'string',
-        'company_id' => 'string'
     ];
 
     protected static function booted()
@@ -61,13 +42,8 @@ class User extends Authenticatable
         });
     }
 
-    public function contacts()
+    public function users()
     {
-        return $this->hasMany(Contact::class);
-    }
-
-    public function companies()
-    {
-        return $this->belongsTo(Company::class, 'company_id');
+        return $this->belongsTo(User::class);
     }
 }

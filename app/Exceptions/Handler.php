@@ -2,31 +2,20 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
     /**
-     * A list of exception types with their corresponding custom log levels.
-     *
-     * @var array<class-string<\Throwable>, \Psr\Log\LogLevel::*>
-     */
-    protected $levels = [
-        //
-    ];
-
-    /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array<int, class-string<\Throwable>>
-     */
-    protected $dontReport = [
-        //
-    ];
-
-    /**
-     * A list of the inputs that are never flashed to the session on validation exceptions.
+     * The list of the inputs that are never flashed to the session on validation exceptions.
      *
      * @var array<int, string>
      */
@@ -38,13 +27,61 @@ class Handler extends ExceptionHandler
 
     /**
      * Register the exception handling callbacks for the application.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    // Modified exception handler for API responses
+    public function render($request, Throwable $exception): Response|JsonResponse
+    {
+        if ($exception instanceof ValidationException) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+
+        if ($exception instanceof AuthenticationException) {
+            return response()->json([
+                'message' => 'User is not authenticated',
+                'status' => false,
+                'error' => $exception->getMessage(),
+            ], 401);
+        }
+
+        if ($exception instanceof ModelNotFoundException) {
+            $model = $exception->getModel();
+            $modelName = class_basename($model);
+            $id = $request->route($modelName) ?? 'unknown';
+            
+            return response()->json([
+                'message' => "{$modelName} with ID {$id} not found",
+                'status' => false,
+                'error' => $exception->getMessage(),
+                'data' => [$modelName => null],
+            ], 404);
+        }
+
+        if ($exception instanceof MethodNotAllowedHttpException) {
+            return response()->json([
+                'message' => 'Method not allowed for this route',
+                'status' => false,
+                'error' => $exception->getMessage(),
+            ], 405);
+        }
+
+        if ($exception instanceof QueryException) {
+            return response()->json([
+                'message' => 'Invalid database query',
+                'status' => false,
+                'error' => $exception->getMessage()
+            ], 500);
+        }
+
+        return parent::render($request, $exception);
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Services\UserService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -10,57 +12,46 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    protected $userService;
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
 
     public function index() {
 
-        return User::select(
-            'id',
-            'name',
-            'email',
-            'phone',
-            'created_at',
-            'updated_at'
-        )->orderBy('updated_at DESC')->get();
+        $response = $this->userService->searchUsers();
+
+        return response()->json($response->toArray(), $response->getStatusCode());
     }
 
-    public function show($id) {
+    public function show(User $user) {
+        $response = $this->userService->findUser($user);
 
-        return User::select(
-            'id',
-            'name',
-            'email',
-            'phone',
-            'created_at',
-            'updated_at'
-        )->where('id', '=', $id)->firstOrFail();
-
+        return response()->json($response->toArray(), $response->getStatusCode());
     }
-    public function store(Request $request) {
+    public function store(UserRequest $userRequest) {
 
-        $validator = Validator::make($request->all(), [
-            'name'      => 'required|string|max:255',
-            'email'     => 'required|string|max:255|unique:users',
-            'password'  => 'required|string',
-            'phone'     => 'nullable|string',
-        ]);
+        $validatedDate = $userRequest->validated();
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        $response = $this->userService->createUser($validatedDate);
 
-        $user = User::create([
-            'name'      => $request->name,
-            'email'     => $request->email,
-            'password'  => Hash::make($request->password),
-            'phone'     => $request->phone,
-        ]);
-
-        $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'data' => $user
-        ]);
-
+        return response()->json($response->toArray(), $response->getStatusCode());
     }
 
+    public function destroy(User $user) {
+
+        $response = $this->userService->destroy($user);
+
+        return response()->json($response->toArray(), $response->getStatusCode());
+    }
+
+    public function update(UserRequest $userRequest,User $user) {
+
+        $validatedDate = $userRequest->validated();
+
+        $response = $this->userService->update($user, $validatedDate);
+
+        return response()->json($response->toArray(), $response->getStatusCode());
+    }
 }

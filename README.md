@@ -52,3 +52,15 @@ Esperamos a compreensão pois infelizmente não temos tempo que desejaríamos pa
 
 * Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <ti@einov.com>
 * Avisar a E-Inov para validar a solução 😃
+
+
+# Rodar Job
+
+# Start a Tinker session
+php artisan tinker
+
+# Then run:
+App\Jobs\SendNewsEmailJob::dispatch();
+
+# Or
+dispatch(new App\Jobs\SendNewsEmailJob());

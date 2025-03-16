@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,21 +21,22 @@ Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 });
 
-Route::get('/users', [UserController::class, 'index']);
-Route::get('/user/{id}', [UserController::class, 'show'])->where('id', '[0-9]+');
-Route::post('/user', [UserController::class, 'store']);
-
-/*
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::controller(UserController::class)->group(function () {
+    Route::get('/users', 'index')->middleware('auth:sanctum');
+    Route::get('/user/{user}', 'show');
+    Route::post('/user', 'store');
+    Route::put('/user/{user}', 'update');
+    Route::delete('/user/{user}', 'destroy');
 });
 
-Route::post('/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
-
-
-Route::post('/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
+Route::controller(CompanyController::class)->group(function () {
+    Route::get('/company', 'index');
+    Route::get('/company/{company}', 'show');
+    Route::post('/company', 'store');
+    Route::put('/company/{company}', 'update');
+    Route::delete('/company/{company}', 'destroy');
 });
-*/
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout']);
+
