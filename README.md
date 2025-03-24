@@ -1,96 +1,155 @@
-# SOBRE O DESAFIO para a vaga Desenvolvedor Full Stack #
+# Desafio I NOV - Backend
+Esse projeto utilizei API's utilizando Laravel 9.x
+Utilizo RabbitMQ para processar jobs e events para enviar as noticias aos usuarios. 
 
-Prezado candidato(a), muito obrigado por participar deste processo seletivo e aceitar fazer o desafio
+No envio de e-mail na primeira interação ele vai adicionar as 15 noticias no banco
+Porem não seria interessante mandar para todos os usuarios as 15 noticias então
+ele vai mandar com a ultima.
+Ficaria a opção de mandar as outras noticias antigas como opção
 
-Podemos garantir que sua entrega será analisada e te retornaremos sobre o resultado do teste.
+Depois da primeira interação ele manda os e-mails normalmente. 
 
-Antes de iniciar, gostaríamos de ressaltar que acreditamos que na área de desenvolvimento de software há várias maneiras de desenvolver uma solução, a ideia aqui não é dizer que essa é a
-certa e aquela é a errada, pois acreditamos que tudo na vida passa por um período de aprendizado e amadurecimento.
-
-Informamos que sua entrega não será compartilhada com ninguém fora do comitê de avaliação e após a nota ela será apagada, mantendo assim todo sigilo do participante.
-
-O que vamos avaliar é o raciocínio lógico para resolver os problemas, o conhecimento nos frameworks utilizados, os cuidados que teve e o tempo de entrega.
-
-Após a avaliação do comitê, os primeiros colocados no teste e na entrevista prévia serão entrevistados sobre a solução e se estiver em conformidade será convocado para a vaga.
-Os demais participantes irão apenas conhecer sua nota e sua posição e ficará na fila de espera, caso a E-Inov abra uma segunda vaga, o segundo será chamado e assim por diante.
-Esperamos a compreensão pois infelizmente não temos tempo que desejaríamos para dar um feedback para cada solução proposta.
-
-# Objetivo #
-* Utilizar da API Backend para o frontend https://bitbucket.org/einov/desafiovuejs/ e fazer os ajustes no CRUD de usuário.
-* E no Backend criar uma rotina diária que colete as notícias da UOL (https://rss.uol.com.br/feed/tecnologia.xml) e mande para
-  todos os usuários cadastrados por e-mail. Nenhum usuário pode receber a mesma notícia duplicada.
+Se o JOB foi diario, ele envia muitos e-mails para o usuario (ao meu ver não seria interessante 
+receber 5 e-mail de noticias do dia passado de uma vez)
+# Exemplo de uso
 
 
-## Frontend ##
-
-### Ambiente local e mais informações sobre o desafio ###
-
-* Repositório https://bitbucket.org/einov/desafiovuejs/
-* Clonar resositório: git clone https://einov@bitbucket.org/einov/desafiovuejs.git
-* Configurar o .env com o path da api do backend
-* Após baixar o repositório, executar: npm install && npm run serve
-* Acessar a página da aplicação conforme descrito no app running at local do vue.js (saída do terminal). Por padrão é http://localhost:8080/
-* Realizar o desafio conforme descrito na página inicial do projeto. Ver print abaixo:
-
-![alt](https://bitbucket.org/einov/desafiofullstack/downloads/frontend.png)
-* Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <ti@einov.com>
-* Avisar a E-Inov para validar a solução 😃
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/bac016542ad44f3fa51ec88b49f95016?sid=42d05aa2-21c2-4931-9287-516515ab35e8" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
 
 
-## Backend ##
 
-### Ambiente local e mais informações sobre o desafio ###
+## Requisitos do sistema
+- PHP 8.1+
+- Composer
+- PostgreSQL
+- RabbitMQ
+- Docker (Opcional)
+- PHP Configuration
 
-* Repositório https://bitbucket.org/einov/desafiofullstackback
-* Clonar resositório: git clone https://einov@bitbucket.org/einov/desafiofullstackback.git
-* Criar .env (pode ser basear no .env.example)
-* Após baixar o repositório, executar composer install e demais procedimentos necessários para subir localmente o ambiente.
-* Segue exemplos das requisições para testar e validar no Postman:
-  https://bitbucket.org/einov/desafiofullstackback/downloads/desafio.postman_collection.json
+## PHP configuration
 
-![alt](https://bitbucket.org/einov/desafiofullstackback/downloads/postman-get-users.png)
+**Para que o RabbitMQ funcione no projeto habilite a extenção 'sockets' no php.ini**
 
-* Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <ti@einov.com>
-* Avisar a E-Inov para validar a solução 😃
+### Habilitar no Windows (XAMPP/WAMP):
 
-# Config
-Habilitar sockets
-php.ini 
-extension=sockets
+Abra seu arquivo php.ini
+Descomente o  extension=sockets
+Reinicie o server
 
-# Rodar Job
+### Habilitar Linux (Ubuntu/Debian):
 
-# Start a Tinker session
-php artisan tinker
-
-# Then run:
-App\Jobs\getNewsJob::dispatch();
-
-# Or
-dispatch(new App\Jobs\getNewsJob());
-
-# Testar emails:
-<?php
-```bash
-// Create or get a news item
-$news = App\Models\News::first() ?? App\Models\News::create([
-    'title' => 'Test News Article',
-    'description' => 'This is a test news article for email notification',
-    'link' => 'https://example.com/test-article',
-    'pubDate' => now(),
-]);
-
-// Make sure you have users in the database
-$userCount = App\Models\User::count();
-echo "Users available to receive emails: {$userCount}\n";
-
-// Create the event manually
-$event = new App\Events\NewsProcessedEvent($news);
-
-// Create the listener
-$listener = new App\Listeners\SendNewsEmailListener();
-
-// Handle the event (this will trigger email sending)
-
+```SH
+sudo apt-get install php8.1-sockets
+sudo systemctl restart php8.1-fpm  # If using FPM
+sudo systemctl restart apache2     # If using Apache
 ```
 
+## Docker Setup Windows
+1. Instale  [docker](https://www.docker.com/products/docker-desktop)
+2. Rode o comando
+```sh
+docker-compose up -d
+```
+
+## Docker Linux
+```sh
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+sudo systemctl enable docker
+sudo systemctl start docker
+
+
+sudo usermod -aG docker $USER
+```
+
+2. Rode Docker compose 
+```sh
+docker-compose up -d
+```
+
+# Inicializar Projeto
+
+### Instale dependecias
+```sh
+composer install
+```
+
+### Configuração do .env
+```sh
+cp .env.example .env
+php artisan key:generate
+```
+
+
+### .env For Database And RabitMQ
+```
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=desafio_inov
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+
+QUEUE_CONNECTION=rabbitmq
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
+RABBITMQ_VHOST=/
+```
+
+### Database Setup
+```sh
+php artisan migrate
+php artisan db:seed  # Opcional
+```
+
+# Rodar projeto
+
+```sh
+php artisan serve
+```
+
+```sh
+php artisan queue:work rabbitmq
+```
+
+# Testes:
+
+Rodar job que busca as noticias:
+
+```sh
+php artisan tinker
+> App\Jobs\getNewsJob::dispatch();
+
+Ou
+
+php artisan job:dispatch "App\Jobs\getNewsJob"
+```
+
+
+Rodar Event para emitir e-mail:
+```sh
+php artisan tinker
+
+$news = App\Models\News::first() ?? App\Models\News::create([
+    'title' => 'Test News Article',
+    'description' => 'This is a test news article',
+    'link' => 'https://example.com/test-article',
+    'pubDate' => now(),
+    'news_hash' => md5('test-article'),
+]);
+
+App\Events\NewsProcessedEvent::dispatch($news->id);
+```
+
+# Troubleshooting
+- Se você encontrar problemas de conexão com o RabbitMQ, verifique a interface de gerenciamento do RabbitMQ em http://localhost:15672 (credenciais padrão: guest/guest).
+
+- Para problemas de conexão com o banco de dados, certifique-se de que o PostgreSQL está em execução e que as credenciais no seu arquivo .env estão corretas.
+
+- Verifique os logs do Laravel em laravel.log para mensagens de erro detalhadas.

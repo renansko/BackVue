@@ -29,9 +29,9 @@ class UserRequest extends FormRequest
         return [
             'name' => !$update ? 'required|max:255' : 'sometimes|max:255',
             'email' => !$update ? 'required|email' : 'sometimes|email',
-            'phones' => !$update ? 'required|array' : 'sometimes|array',
+            'phones' => 'sometimes|array',
             'phones.*' => 'string|min:4|max:15',
-            'company_id' => !$update ? 'required|uuid|exists:companies,id' : 'sometimes|uuid|exists:companies,id',
+            'company_id' =>'sometimes|uuid|exists:companies,id',
             'password' => !$update ? [
                 'required',
                 'confirmed',
@@ -63,14 +63,13 @@ class UserRequest extends FormRequest
             'password.uncompromised'    => 'This password appeared in a data breach. Please choose a different password',
             
             'password_confirmation.required' => 'Password confirmation is required',
-
-            'phone.required' => 'Phone is required',
-            'phone.string' => 'Phone must be text',
-            'phone.regex' => 'Phone must be in the format (XX) XXXXX-XXXX or (XX) XXXX-XXXX',
+            'phones.required' => 'At least one phone is required',
+            'phones.array' => 'Phones must be provided as a list',
+            'phones.*.string' => 'Phone numbers must be text',
+            'phones.*.min' => 'Phone numbers must be at least 4 characters',
+            'phones.*.max' => 'Phone numbers cannot exceed 15 characters',
             
-            // 'documento.required'    => 'Document is required',
-            // 'documento.string'      => 'Document must be text',
-            // 'documento.cpf_ou_cnpj' => 'Please enter a valid CPF or CNPJ',
+            'company_id.uuid' => 'Company ID must be a valid UUID',
         ];
     }
 

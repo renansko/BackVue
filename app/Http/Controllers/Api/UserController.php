@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Services\UserService;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UserFiltroRequest;
 use App\Http\Requests\UserRequest;
 use App\Http\Responses\ApiModelErrorResponse;
 use App\Models\Helper;

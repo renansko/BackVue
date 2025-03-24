@@ -23,10 +23,9 @@ class getNewsJob implements ShouldQueue
     public function handle()
     {
         try {
-            // 1. Start log (ensure this comes FIRST in the try block)
             Log::info('[UOL RSS] Starting to fetch feed');
 
-            // 2. Fetch response
+            //Fetch response
             $response = Http::withOptions(['verify' => false])
                 ->withHeaders([
                     'Accept' => 'application/xml',
@@ -35,7 +34,6 @@ class getNewsJob implements ShouldQueue
                 ->timeout(30)
                 ->get('https://rss.uol.com.br/feed/tecnologia.xml');
 
-            // 3. Immediate response logging
             Log::info('[UOL RSS] Response received', [
                 'status' => $response->status(),
                 'size' => strlen($response->body())
@@ -49,13 +47,12 @@ class getNewsJob implements ShouldQueue
                 return;
             }
 
-            // 4. Handle encoding
             $xmlString = $this->cleanXmlContent($response->body());
 
-            // 5. XML parsing
+            // XML parsing
             $xml = $this->parseXml($xmlString);
             
-            // 6. Process items to dataBase
+            // Process items to dataBase
             $processed = $this->processXml($xml);
             
             Log::info('[UOL RSS] Successfully processed', [
@@ -125,8 +122,6 @@ class getNewsJob implements ShouldQueue
 
         foreach ($xml->channel->item as $item) {
 
-             // Verifica se já existe usando bloqueio para evitar race conditions
-             
              $pubDate = $this->parseDate((string)$item->pubDate);
              
             // Verificar se existe essa noticia no banco de dados
@@ -139,9 +134,9 @@ class getNewsJob implements ShouldQueue
             // This is a index in database make sure the news is a unique and best performance to finded
             $hash = hash('sha256', (string)$item->link . $pubDate);
             
-            Log::info('[UOL RSS] HASH', [
-                'hash' => $hash
-            ]);
+            // Log::info('[UOL RSS] HASH', [
+            //     'hash' => $hash
+            // ]);
 
             // Soluction to parse a image and description where is in the same string
             $imageUrl = null;
@@ -151,9 +146,9 @@ class getNewsJob implements ShouldQueue
             // Extract image URL from description
             if (preg_match("/<img[^>]+src='([^']+)'/", $description, $matches)) {
                 $imageUrl = $matches[1];
-                Log::info('[UOL RSS] IMAGEM', [
-                    'img' => $imageUrl
-                ]);
+                // Log::info('[UOL RSS] IMAGEM', [
+                //     'img' => $imageUrl
+                // ]);
                 
             }
             // Remove the image and get only a description
@@ -161,7 +156,6 @@ class getNewsJob implements ShouldQueue
             // Clean up any extra whitespace
             $description = trim($description);
 
-            // Form array to save in news
             $newsItem = [
                 'title' => trim((string)$item->title),
                 'link' => trim((string)$item->link),
@@ -171,15 +165,25 @@ class getNewsJob implements ShouldQueue
                 'news_hash' => $hash
             ];
 
-            // Save to database
             try {
-                $news = News::updateOrCreate(
-                    ['news_hash' => $hash],  // Find by link (unique)
-                    $newsItem                // Update or create with these attributes
-                );
+                $exists = News::where('news_hash', $hash)->exists();
                 
+                if (!$exists) {
+                    $news = News::create($newsItem);
+                } else {
+                    $news = null;
+                    Log::info('[UOL RSS] Skipping existing news', [
+                        'hash' => $hash,
+                        'title' => $newsItem['title']
+                    ]);
+                    continue;
+                }
                 if ($news->wasRecentlyCreated) {
-                    NewsProcessedEvent::dispatch($news); // Disparar evento
+                    Log::info('[UOL RSS] Saved news item', [
+                        'id' => $news->id,
+                        'title' => $news->title
+                    ]);
+                    NewsProcessedEvent::dispatch($news); 
                 }
 
             } catch (\Exception $e) {
@@ -215,7 +219,6 @@ class getNewsJob implements ShouldQueue
             'Qui' => 'Thu', 'Sex' => 'Fri', 'Sáb' => 'Sat', 'Dom' => 'Sun'
             ];
             
-            // Replace Portuguese day/month names with English equivalents
             foreach ($dayMap as $pt => $en) {
             $dateString = str_replace($pt, $en, $dateString);
             }

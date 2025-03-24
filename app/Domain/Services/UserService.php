@@ -152,11 +152,10 @@ class UserService
 
             // Extract phone numbers from the update data
             $phoneNumbers = [];
-            if (isset($updatedArray['phone'])) {
-                $phoneNumbers = $this->validatePhoneNumbers($updatedArray['phone']);
+            if (isset($updatedArray['phones'])) {
+                $phoneNumbers = $this->validatePhoneNumbers($updatedArray['phones']);
                 
-                // Remove phones from user data as we'll handle them separately
-                unset($updatedArray['phone']);
+                unset($updatedArray['phones']);
             }
 
             // Check if any phone numbers are already in use by other users
@@ -173,19 +172,15 @@ class UserService
                 );
             }
 
-            // Update user data (excluding phones)
             $user->fill($updatedArray);
 
-            // Check if user data has changed
             $userChanged = $user->isDirty();
             if ($userChanged) {
                 $user->save();
             }
 
-            // Update phone numbers if provided
             $phonesChanged = false;
             if (!empty($phoneNumbers)) {
-                // Get current phone numbers
                 $currentPhones = $user->contacts()->pluck('phone')->toArray();
                 
                 // Only process if there are differences
@@ -209,7 +204,6 @@ class UserService
 
             DB::commit();
             
-            // Return appropriate response
             if ($userChanged || $phonesChanged) {
                 Log::info(User::class . ' : Successfully updated : function-update', 
                     ['user_id' => $user->id, 'user_changed' => $userChanged, 'phones_changed' => $phonesChanged]);
@@ -277,11 +271,9 @@ class UserService
         try {
             Log::info(User::class . ' : search news for user : function-searchUserNews', ['user_id' => $user->id]);
             
-            // Get pagination parameters from filters
             $perPage        = $filters['per_page'] ?? 15;
             $page           = $filters['page'] ?? 1;
             
-            // Get the news relationship as a query builder so we can paginate only news for this user
             $newsQuery = $user->news();
             
             // Execute pagination on the relationship
@@ -292,7 +284,6 @@ class UserService
                 'news_count' => $paginatedNews->total()
             ]);
             
-            // Return both user with is passed in the request and yopr paginated news
             return [
                 'user' => $user->toArray(),
                 'news' => $paginatedNews

@@ -37,7 +37,7 @@ class ApiModelErrorResponse
         // Retorna um array com varios models
         if (is_array($this->model)) {
             foreach ($this->model as $model) {
-                if (count($this->model) > 0 && $this->model[0] instanceof Model) {
+                if (count($this->model) > 0 && isset($this->model[0]) instanceof Model) {
                     $tableName = $model->getTable();
                     $modelData = $model->toArray();
 

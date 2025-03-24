@@ -18,12 +18,14 @@ class Kernel extends ConsoleKernel
     {
         // Run the job daily at 8:00 AM
         // $schedule->job(new getNewsJob)->daily()->at('08:00');
+
+        // For tests:
         $schedule->job(new getNewsJob)->everyMinute();
         
         //Verify the news table every day a prune operation
         $schedule->command('model:prune', [
             '--model' => 'App\Models\News',
-        ])->daily();
+        ])->monthly();
     }
 
     /**

@@ -54,7 +54,6 @@ class CompanyService
 
             $companyExistente = Company::where('email', $companyData['email'])->withTrashed()->first();
             if ($companyExistente && $companyExistente->trashed()) {
-                // Caso exista um registro com soft delete, restaure-o
                 $companyExistente->restore();
                 // $companyExistente->update($companyData); -> Updated If new values ( I think it's not necessary )
     

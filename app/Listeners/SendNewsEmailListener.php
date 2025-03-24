@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\NewsProcessedEvent;
 use App\Mail\NewsNotification;
+use App\Models\News;
 use App\Models\NewsUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -33,17 +34,22 @@ class SendNewsEmailListener
     {
         try {
             $news = $event->news;
-            Log::info('SendNewsEmailListener: Processing news', ['news_id' => $news->id, 'title' => $news->title]);
-            // Add this for debugging
-            $pivotTableName = 'news_users'; // Make sure this matches your actual table name
-            $testQuery = DB::table($pivotTableName)->where('news_id', $news->id)->count();
-            Log::info('Debug pivot table', [
-                'table' => $pivotTableName,
-                'news_id' => $news->id,
-                'existing_records' => $testQuery
-            ]);
             
-            // Enviar e-mails para usuários que ainda não receberam a noticia nova
+            if (is_string($news)) {
+                Log::info('SendNewsEmailListener: Loading news from ID', ['news_id' => $news]);
+                $news = News::find($news);
+                
+                if (!$news) {
+                    Log::error('SendNewsEmailListener: News not found', ['news_id' => $event->news]);
+                    return false;
+                }
+            }
+            
+            Log::info('SendNewsEmailListener: Processing news', [
+                'news_id' => $news->id,
+                'title' => $news->title
+            ]);
+
             User::whereDoesntHave('news', function($query) use ($news) {
                 $query->where('news_users.news_id', $news->id);
             })
@@ -59,7 +65,6 @@ class SendNewsEmailListener
                 }
             });
 
- 
             Log::info('SendNewsEmailListener: Completed processing');
             return true;
         } catch (\Exception $e) {
@@ -73,34 +78,87 @@ class SendNewsEmailListener
 
     protected function batchSend($users, $news)
     {
-        $now = now();
-
-        // Insert in all users a new newsletter
-        $inserts = $users->map(fn($user) => [
-            'user_id' => $user->id,
-            'news_id' => $news->id,
-            'send_at' => $now,
-            'created_at' => $now,
-            'updated_at' => $now
-        ])->toArray();
-        
-        DB::table('news_users')->insert($inserts);
-        
-        // Disparar e-mails
-        foreach ($users as $user) {
-            Mail::to($user->email)
-                ->send(new NewsNotification($news));
+        try {
+            $now = now();
+            $emailsSent = 0;
+            
+            // Check if these users are new (no previous news)
+            $userIds = $users->pluck('id')->toArray();
+            $userNewsCount = DB::table('news_users')
+                ->whereIn('user_id', $userIds)
+                ->count();
+            
+            // If these are new users with no previous news, we'll only record all news
+            // but only send email for the most recent one
+            $isFirstInteraction = $userNewsCount === 0 && count($userIds) > 0;
+            
+            // Get the most recent news item if this is first interaction
+            $mostRecentNews = $news;
+            if ($isFirstInteraction) {
+                // Record when we're limiting emails for first-time users
+                Log::info('SendNewsEmailListener: First interaction detected - limiting emails to most recent news');
+                
+                // Find the most recent news item
+                $mostRecentNews = News::orderBy('pubDate', 'desc')->first() ?? $news;
+            }
+            
+            // Build user-news relationships for DB
+            $inserts = $users->map(fn($user) => [
+                'user_id' => $user->id,
+                'news_id' => $news->id,
+                'send_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now
+            ])->toArray();
+            
+            // Use insertOrIgnore to prevent duplicate key errors
+            DB::table('news_users')->insertOrIgnore($inserts);
+            
+            // Send emails - only for the most recent news if this is first interaction
+            foreach ($users as $user) {
+                if (!$isFirstInteraction || $news->id === $mostRecentNews->id) {
+                    Mail::to($user->email)
+                        ->send(new NewsNotification($news));
+                    $emailsSent++;
+                }
+            }
+            
+            Log::info('SendNewsEmailListener: Batch completed', [
+                'users_in_batch' => count($users),
+                'emails_sent' => $emailsSent,
+                'first_interaction' => $isFirstInteraction
+            ]);
+        } catch (\Exception $e) {
+            Log::error('SendNewsEmailListener: Error in batch send', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
     public function failed(NewsProcessedEvent $event, Throwable $exception)
     {
-        Log::error('Falha ao processar notícia', [
-            'news_id' => $event->news->id,
-            'error' => $exception->getMessage()
-        ]);
-        
-        // Opcional: Marcar a notícia como problemática
-        $event->news->update(['status' => 'failed']);
+        try {
+            $newsId = is_string($event->news) ? $event->news : $event->news->id;
+            
+            Log::error('Falha ao processar notícia', [
+                'news_id' => $newsId,
+                'error' => $exception->getMessage()
+            ]);
+            
+            // Load model if needed
+            if (is_string($event->news)) {
+                $news = \App\Models\News::find($event->news);
+                if ($news) {
+                    $news->update(['status' => 'failed']);
+                }
+            } else {
+                $event->news->update(['status' => 'failed']);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in failed handler', [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

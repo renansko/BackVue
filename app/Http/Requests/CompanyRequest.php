@@ -35,8 +35,7 @@ class CompanyRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.max' => 'Name must have a maximum of 255 characters',
-            
+            'name.max'          => 'Name must have a maximum of 255 characters',
             'email.required'    => 'Email is required',
             'email.email'       => 'Please enter a valid email',
         ];

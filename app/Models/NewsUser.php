@@ -22,8 +22,8 @@ class NewsUser extends Pivot
     protected static function booted()
     {
         static::addGlobalScope('uuid', function ($query) {
-            $query->whereKey(request()->user()->id); // Adapte conforme necessário
-            $query->whereKey(request()->news()->id); // Adapte conforme necessário
+            $query->whereKey(request()->user()->id);
+            $query->whereKey(request()->news()->id);
         });
     }
 }
