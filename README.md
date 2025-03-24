@@ -14,7 +14,10 @@ receber 5 e-mail de noticias do dia passado de uma vez)
 # Exemplo de uso
 
 
-[![Assista ao vídeo](URL_DO_GIF)](https://www.loom.com/share/bac016542ad44f3fa51ec88b49f95016)
+## Demonstração do Projeto
+
+[![Assista à demonstração do projeto](http://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://drive.google.com/file/d/VIDEO_ID/preview)
+
 
 ## Requisitos do sistema
 - PHP 8.1+
