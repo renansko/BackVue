@@ -14,7 +14,7 @@ receber 5 e-mail de noticias do dia passado de uma vez)
 # Exemplo de uso
 
 
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/bac016542ad44f3fa51ec88b49f95016?sid=42d05aa2-21c2-4931-9287-516515ab35e8" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+Assista ao vídeo: [Loom Video](https://www.loom.com/share/bac016542ad44f3fa51ec88b49f95016)
 
 
 
