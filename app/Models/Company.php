@@ -13,29 +13,22 @@ class Company extends Model
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    protected $table = 'contacts';
+    protected $table = 'companies';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
     ];
 
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
+        'id' => 'string',
         'name' => 'string',
         'email' => 'string',
     ];
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+    
     protected static function booted()
     {
         

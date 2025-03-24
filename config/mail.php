@@ -49,6 +49,18 @@ return [
             'transport' => 'ses',
         ],
 
+       'stream' => [
+        'ssl' => [
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+            'allow_self_signed' => false,
+            'cafile' => env('MAILER_CA_PATH', '')
+        ],
+],
+        'resend' => [
+            'key' => env('RESEND_KEY'),
+        ],
+
         'mailgun' => [
             'transport' => 'mailgun',
         ],

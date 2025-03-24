@@ -28,7 +28,7 @@ class DispatchNewsJob extends Command
     public function handle()
     {
         $this->info('Dispatching news job...');
-        dispatch(new \App\Jobs\SendNewsEmailJob());
+        dispatch(new \App\Jobs\getNewsJob());
         $this->info('Job dispatched!');
         
         return Command::SUCCESS;

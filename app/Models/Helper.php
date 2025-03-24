@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-
+use App\Http\Requests\UserFiltroRequest;
 use App\Http\Responses\ApiModelErrorResponse;
 use App\Http\Responses\ApiModelResponse;
 use Exception;
@@ -16,14 +16,11 @@ class Helper
     {
         if(!$passarArrayJaValidada){
             $filtroRequest->validated();
-            $filtroRequest = $filtroRequest->except('page');
-            
+            $filtroRequest = $filtroRequest->except(['page', 'per_page']);
         }
         foreach ($filtroRequest as $chave => $valor) {
             $filtros[] = ['chave' => $chave, 'valor' => $valor];
         }
-        
-
         if (isset($filtros) && count($filtros) > 0) {
             foreach ($filtros as $filtro) {
                  $response = self::keyValueWhere($query, $filtro['chave'], $filtro['valor'], $model);
@@ -33,18 +30,22 @@ class Helper
                 return response()->json($response->toArray(), $response->getStatusCode());
             }
 
-            $data = $response->orderByDesc('created_at')->paginate(20);
+            $perPage = $filtroRequest['per_page'] ?? 20;
+            
             if($returnQuery){
-                return $data;
+                return $response;
             }
-            $response = new ApiModelResponse('{$nome} fitlrado com sucesso', $model, 200);
+            return $response->orderByDesc('created_at')->paginate($perPage);
         }
-        $response = $query->orderByDesc('created_at')->paginate(20);
+
         if($returnQuery){
-            return $response;
+            return $query;
         }
-        $response = new ApiModelResponse('{$nome} fitlrado com sucesso', $model, 200);
-    }
+
+        $perPage = $filtroRequest['per_page'] ?? 20;
+        return $query->orderByDesc('created_at')->paginate($perPage);        
+
+        }
 
     public function keyValueWhere($query, $chave, $valor, $model)
     {

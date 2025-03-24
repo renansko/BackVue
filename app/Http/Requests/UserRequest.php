@@ -28,51 +28,21 @@ class UserRequest extends FormRequest
         $update = $this->isMethod('PUT');
         return [
             'name' => !$update ? 'required|max:255' : 'sometimes|max:255',
-            'email' => !$update ? 'required|email,' : 'sometimes|email',
-            'phone' => !$update ? 'required|string' : 'sometimes|string',
+            'email' => !$update ? 'required|email' : 'sometimes|email',
+            'phones' => !$update ? 'required|array' : 'sometimes|array',
+            'phones.*' => 'string|min:4|max:15',
             'company_id' => !$update ? 'required|uuid|exists:companies,id' : 'sometimes|uuid|exists:companies,id',
             'password' => !$update ? [
                 'required',
-                'confirmed', // Confirmação de senha
+                'confirmed',
                 Password::min(8)
                     ->mixedCase()
                     ->numbers()
                     ->symbols()
-                ->uncompromised()
-                    ->rules([
-                        'max:255',
-                        function($attributes, $value, $fail){
-                            $invalidPatterns = [
-                                $this->input('email'),
-                                $this->input('name'),
-                                $this->input('username'),
-                                '123', 'abc', 'senha', 'password'
-                            ];
-
-                            foreach($invalidPatterns as $patern){
-                                if($patern && stripos($value, $patern) !== false){
-                                    $fail("A senha contém informações inseguras.");
-                                }
-                            }
-                        }
-                    ]),
-                // 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{12,}$/'
-            ]: 'prohibited',
+                    ->uncompromised()
+            ] : 'prohibited',
             'password_confirmation' => !$update ? 'required' : 'prohibited',
-            // 'documento' => !$update ? [
-            // 'required',
-            // 'string',
-            // 'cpf_ou_cnpj',
-            // 'cpf_formater_to_db',
-            // ] : [
-            //     'sometimes',    
-            // 'string',
-            // 'cpf_ou_cnpj',
-            // 'cpf_formater_to_db',
-            // ],
-          
-            ];
-      
+        ];
     }
 
     public function messages(): array

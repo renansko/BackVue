@@ -2,7 +2,7 @@
 
 namespace App\Console;
 
-use App\Jobs\SendNewsEmailJob;
+use App\Jobs\getNewsJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -17,13 +17,13 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Run the job daily at 8:00 AM
-        $schedule->job(new SendNewsEmailJob)->daily()->at('08:00');
+        // $schedule->job(new getNewsJob)->daily()->at('08:00');
+        $schedule->job(new getNewsJob)->everyMinute();
         
-        // Or hourly if you need more frequent updates
-        // $schedule->job(new SendNewsEmailJob)->hourly();
-        
-        // Or with custom frequency
-        // $schedule->job(new SendNewsEmailJob)->cron('0 */4 * * *'); // Every 4 hours
+        //Verify the news table every day a prune operation
+        $schedule->command('model:prune', [
+            '--model' => 'App\Models\News',
+        ])->daily();
     }
 
     /**

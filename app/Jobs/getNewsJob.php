@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Events\NewsProcessedEvent;
 use App\Models\News;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
 
-class SendNewsEmailJob implements ShouldQueue
+class getNewsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -23,7 +25,7 @@ class SendNewsEmailJob implements ShouldQueue
         try {
             // 1. Start log (ensure this comes FIRST in the try block)
             Log::info('[UOL RSS] Starting to fetch feed');
-            
+
             // 2. Fetch response
             $response = Http::withOptions(['verify' => false])
                 ->withHeaders([
@@ -53,15 +55,12 @@ class SendNewsEmailJob implements ShouldQueue
             // 5. XML parsing
             $xml = $this->parseXml($xmlString);
             
-            // 6. Process items
+            // 6. Process items to dataBase
             $processed = $this->processXml($xml);
             
             Log::info('[UOL RSS] Successfully processed', [
                 'items_count' => count($processed['channel']['items'])
             ]);
-
-            // 7. Here you would typically dispatch emails or process results
-            // $this->sendNotifications($processed);
 
         } catch (\Throwable $e) {
             Log::error('[UOL RSS] Job failed', [
@@ -72,6 +71,7 @@ class SendNewsEmailJob implements ShouldQueue
         }
     }
 
+    // The SimpleXml have some error to parse a uol XML this function resolve that 
     private function cleanXmlContent(string $content): string
     {
         // Remove BOM if present
@@ -84,6 +84,7 @@ class SendNewsEmailJob implements ShouldQueue
         return preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $content);
     }
 
+    // Parsing data to can save in the database
     private function parseXml(string $xmlString): SimpleXMLElement
     {
         libxml_use_internal_errors(true);
@@ -123,46 +124,81 @@ class SendNewsEmailJob implements ShouldQueue
         ];
 
         foreach ($xml->channel->item as $item) {
-            $pubDate = $this->parseDate((string)$item->pubDate);
+
+             // Verifica se já existe usando bloqueio para evitar race conditions
+             
+             $pubDate = $this->parseDate((string)$item->pubDate);
+             
+            // Verificar se existe essa noticia no banco de dados
+            //  $exists = DB::transaction(function () use ($hash) {
+            //      return TrackedNewsItem::where('item_hash', $hash)
+            //          ->lockForUpdate()
+            //          ->exists();
+            //  });
+
+            // This is a index in database make sure the news is a unique and best performance to finded
+            $hash = hash('sha256', (string)$item->link . $pubDate);
             
-            // Extract image URL from description if available
+            Log::info('[UOL RSS] HASH', [
+                'hash' => $hash
+            ]);
+
+            // Soluction to parse a image and description where is in the same string
             $imageUrl = null;
             $description = (string)$item->description;
+            $imageUrl = null;
+            
+            // Extract image URL from description
             if (preg_match("/<img[^>]+src='([^']+)'/", $description, $matches)) {
                 $imageUrl = $matches[1];
                 Log::info('[UOL RSS] IMAGEM', [
                     'img' => $imageUrl
                 ]);
+                
             }
-            
+            // Remove the image and get only a description
+            $description = preg_replace("/<img[^>]+>/", "", $description);
+            // Clean up any extra whitespace
+            $description = trim($description);
+
+            // Form array to save in news
             $newsItem = [
                 'title' => trim((string)$item->title),
                 'link' => trim((string)$item->link),
                 'description' => trim($description),
                 'pubDate' => $pubDate,
                 'image_url' => $imageUrl,
+                'news_hash' => $hash
             ];
-            
+
             // Save to database
             try {
-                News::updateOrCreate(
-                    ['link' => $newsItem['link']],  // Find by link (unique)
-                    $newsItem                       // Update or create with these attributes
+                $news = News::updateOrCreate(
+                    ['news_hash' => $hash],  // Find by link (unique)
+                    $newsItem                // Update or create with these attributes
                 );
+                
+                if ($news->wasRecentlyCreated) {
+                    NewsProcessedEvent::dispatch($news); // Disparar evento
+                }
+
             } catch (\Exception $e) {
                 Log::error('[UOL RSS] Failed to save news item', [
                     'error' => $e->getMessage(),
                     'item' => $newsItem['title']
                 ]);
             }
-            
+
             $result['channel']['items'][] = $newsItem;
         }
+
          $savedCount = News::count();
             Log::info('[UOL RSS] Processed and saved items', [
             'processed_count' => count($result['channel']['items']),
             'total_in_db' => $savedCount
         ]);
+
+        return $result;
     }
 
     private function parseDate(string $dateString): string
@@ -188,7 +224,7 @@ class SendNewsEmailJob implements ShouldQueue
             $dateString = str_replace($pt, $en, $dateString);
             }
             
-            return \Carbon\Carbon::parse($dateString)->toIso8601String();
+            return Carbon::parse($dateString)->toIso8601String();
         } catch (\Exception $e) {
             Log::warning('[UOL RSS] Invalid date format', ['date' => $dateString]);
             return $dateString;

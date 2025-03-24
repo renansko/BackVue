@@ -65,8 +65,10 @@ class CompanyService
                 throw new ConflictHttpException('The email is already in use.');
             }
 
-            $company->name = $companyData['name'];
-            $company->email = $companyData['email'];
+            $company->fill([
+                'name' => $companyData['name'],
+                'email' => $companyData['email']
+            ]);
 
             if ($company->save()) {
                 Log::info(Company::class . ' Created company : function-createCompany', ['company created' => $company]);

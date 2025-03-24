@@ -15,23 +15,14 @@ class Contact extends Model
 
     protected $table = 'contacts';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'phone',
     ];
 
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
+        'id'        => 'string',
         'phone' => 'string',
+        'user_id' => 'string',
     ];
 
     protected static function booted()

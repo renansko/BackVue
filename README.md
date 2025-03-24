@@ -53,6 +53,10 @@ Esperamos a compreensão pois infelizmente não temos tempo que desejaríamos pa
 * Após finalizar o desafio commitar a solução em um repositório seu e conceder acesso ao usuário <ti@einov.com>
 * Avisar a E-Inov para validar a solução 😃
 
+# Config
+Habilitar sockets
+php.ini 
+extension=sockets
 
 # Rodar Job
 
@@ -60,7 +64,33 @@ Esperamos a compreensão pois infelizmente não temos tempo que desejaríamos pa
 php artisan tinker
 
 # Then run:
-App\Jobs\SendNewsEmailJob::dispatch();
+App\Jobs\getNewsJob::dispatch();
 
 # Or
-dispatch(new App\Jobs\SendNewsEmailJob());
+dispatch(new App\Jobs\getNewsJob());
+
+# Testar emails:
+<?php
+```bash
+// Create or get a news item
+$news = App\Models\News::first() ?? App\Models\News::create([
+    'title' => 'Test News Article',
+    'description' => 'This is a test news article for email notification',
+    'link' => 'https://example.com/test-article',
+    'pubDate' => now(),
+]);
+
+// Make sure you have users in the database
+$userCount = App\Models\User::count();
+echo "Users available to receive emails: {$userCount}\n";
+
+// Create the event manually
+$event = new App\Events\NewsProcessedEvent($news);
+
+// Create the listener
+$listener = new App\Listeners\SendNewsEmailListener();
+
+// Handle the event (this will trigger email sending)
+
+```
+

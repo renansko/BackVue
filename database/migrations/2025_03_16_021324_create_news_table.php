@@ -19,7 +19,12 @@ return new class extends Migration
             $table->text('description');
             $table->dateTime('pubDate');
             $table->string('link')->unique();
-            $table->fullText('image_url')->nullable();
+            $table->text('image_url')->nullable();
+            $table->string('news_hash', 64)->unique(); // Hash unique
+            
+            $table->index('pubDate');
+            $table->index('news_hash');
+
             $table->timestamps();
         });
     }

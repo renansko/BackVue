@@ -27,7 +27,7 @@ class CompanyRequest extends FormRequest
         $update = $this->isMethod('PUT');
         return [
                 'name' => !$update ? 'required|max:255' : 'sometimes|max:255',
-                'email' => !$update ? 'required|email,' : 'sometimes|email',
+                'email' => !$update ? 'required|email' : 'sometimes|email',
             ];
       
     }

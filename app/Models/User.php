@@ -38,6 +38,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'pivot'
     ];
 
 
@@ -52,12 +53,26 @@ class User extends Authenticatable
         'phone' => 'string',
         'company_id' => 'string'
     ];
-
+    
+    public $incrementing = false;
+    protected $keyType = 'string';
+    
+    // Load all information of contatcs and companies
+    // protected $with = ['contacts', 'companies'];
+    
     protected static function booted()
     {
-        
         static::creating(function ($model) {
             $model->id = (string) Uuid::uuid7();
+        });
+
+        // Trait to load some information of contacts and companies
+        // Less processing
+        static::addGlobalScope('withLimitedRelations', function ($builder) {
+            $builder->with([
+                'contacts:id,user_id,phone',  // Only select phone field from contacts
+                'companies:id,name,email'        // Select name and email from company
+            ]);
         });
     }
 
@@ -70,4 +85,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Company::class, 'company_id');
     }
+
+    public function news()
+    {
+        return $this->belongsToMany(News::class, 'news_users')
+            ->using(NewsUser::class)
+            ->withPivot('send_at')
+            ->withTimestamps()
+            ->withPivot(['user_id', 'news_id']);
+    }
+    
 }

@@ -15,10 +15,13 @@ return new class extends Migration
     {
         Schema::create('contacts', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('phone')->unique();
+            $table->string('phone')->unique()->min(4)->max(15);
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('phone');
+
         });
     }
 

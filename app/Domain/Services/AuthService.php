@@ -30,7 +30,7 @@ class AuthService
         
         return response()->json([
             'status'    => true,
-            'nome'      => Auth::user()->name,
+            'name'      => Auth::user()->name,
             'email'     => Auth::user()->email,
             'token'     =>  $token 
         ], 200)->withCookie('token', $token, 60 * 24 * 30, null, null, false, true);

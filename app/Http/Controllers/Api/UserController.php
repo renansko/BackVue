@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Services\UserService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserFiltroRequest;
 use App\Http\Requests\UserRequest;
+use App\Http\Responses\ApiModelErrorResponse;
+use App\Models\Helper;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -53,5 +54,18 @@ class UserController extends Controller
         $response = $this->userService->update($user, $validatedDate);
 
         return response()->json($response->toArray(), $response->getStatusCode());
+    }
+
+    public function searchUserNews(Request $userRequest, User $user) {
+
+        $validatedDate = $userRequest->only(['page', 'per_page']);
+
+        $query = $this->userService->searchUserNews($user, $validatedDate);
+
+        if($query instanceof ApiModelErrorResponse){
+            return response()->json($query->toArray(), $query->getStatusCode());
+        }
+
+        return response()->json($query, 200);
     }
 }
